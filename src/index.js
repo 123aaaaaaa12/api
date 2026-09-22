@@ -1,9 +1,37 @@
+```js
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "https://netivly.pl",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+
+function json(data, options = {}) {
+  return Response.json(data, {
+    ...options,
+    headers: {
+      ...corsHeaders,
+      ...(options.headers || {})
+    }
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders
+      });
+    }
+
     // Lista wszystkich wątków
-    if (request.method === "GET" && url.pathname === "/api/threads") {
+    if (
+      request.method === "GET" &&
+      url.pathname === "/api/threads"
+    ) {
       const result = await env.DB
         .prepare(`
           SELECT id, title, created_at
@@ -12,10 +40,10 @@ export default {
         `)
         .all();
 
-      return Response.json(result.results);
+      return json(result.results);
     }
 
-    // Jeden wątek + jego posty
+    // Jeden wątek + posty
     if (
       request.method === "GET" &&
       url.pathname.startsWith("/api/thread/")
@@ -32,7 +60,7 @@ export default {
         .first();
 
       if (!thread) {
-        return Response.json(
+        return json(
           { error: "Wątek nie istnieje" },
           { status: 404 }
         );
@@ -48,7 +76,7 @@ export default {
         .bind(id)
         .all();
 
-      return Response.json({
+      return json({
         thread,
         posts: posts.results
       });
@@ -62,8 +90,11 @@ export default {
       try {
         const body = await request.json();
 
-        if (!body.title || body.title.trim().length === 0) {
-          return Response.json(
+        if (
+          !body.title ||
+          body.title.trim().length === 0
+        ) {
+          return json(
             { error: "Tytuł jest wymagany" },
             { status: 400 }
           );
@@ -77,12 +108,12 @@ export default {
           .bind(body.title.trim())
           .run();
 
-        return Response.json({
+        return json({
           success: true,
           thread_id: result.meta.last_row_id
         });
       } catch (error) {
-        return Response.json(
+        return json(
           { error: "Nieprawidłowe dane" },
           { status: 400 }
         );
@@ -102,7 +133,7 @@ export default {
           !body.content ||
           body.content.trim().length === 0
         ) {
-          return Response.json(
+          return json(
             { error: "Treść posta jest wymagana" },
             { status: 400 }
           );
@@ -118,7 +149,7 @@ export default {
           .first();
 
         if (!thread) {
-          return Response.json(
+          return json(
             { error: "Wątek nie istnieje" },
             { status: 404 }
           );
@@ -135,21 +166,22 @@ export default {
           )
           .run();
 
-        return Response.json({
+        return json({
           success: true,
           post_id: result.meta.last_row_id
         });
       } catch (error) {
-        return Response.json(
+        return json(
           { error: "Nieprawidłowe dane" },
           { status: 400 }
         );
       }
     }
 
-    return Response.json({
+    return json({
       name: "Netivly API",
       status: "online"
     });
   }
 };
+```
