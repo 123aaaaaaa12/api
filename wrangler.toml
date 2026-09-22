@@ -1,0 +1,8 @@
+name = "netivly-api"
+main = "src/index.js"
+compatibility_date = "2026-09-22"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "netivly-db"
+database_id = "cb83b7a4-99a0-413b-aa88-97d687cc34ff"
