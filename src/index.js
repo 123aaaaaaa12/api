@@ -1,4 +1,3 @@
-```js
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://netivly.pl",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -19,7 +18,6 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -27,7 +25,6 @@ export default {
       });
     }
 
-    // Lista wszystkich wątków
     if (
       request.method === "GET" &&
       url.pathname === "/api/threads"
@@ -43,7 +40,6 @@ export default {
       return json(result.results);
     }
 
-    // Jeden wątek + posty
     if (
       request.method === "GET" &&
       url.pathname.startsWith("/api/thread/")
@@ -82,7 +78,6 @@ export default {
       });
     }
 
-    // Tworzenie nowego wątku
     if (
       request.method === "POST" &&
       url.pathname === "/api/thread"
@@ -120,7 +115,6 @@ export default {
       }
     }
 
-    // Dodawanie posta
     if (
       request.method === "POST" &&
       url.pathname === "/api/post"
@@ -184,4 +178,3 @@ export default {
     });
   }
 };
-```
