@@ -1,14 +1,25 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://netivly.pl",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
-};
+const ALLOWED_ORIGINS = [
+  "https://netivly.pl",
+  "https://www.netivly.pl"
+];
 
-function json(data, options = {}) {
+function getCorsHeaders(request) {
+  const origin = request.headers.get("Origin");
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin"
+  };
+}
+
+function json(data, request, options = {}) {
   return Response.json(data, {
     ...options,
     headers: {
-      ...corsHeaders,
+      ...getCorsHeaders(request),
       ...(options.headers || {})
     }
   });
@@ -21,7 +32,7 @@ export default {
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
-        headers: corsHeaders
+        headers: getCorsHeaders(request)
       });
     }
 
@@ -37,7 +48,7 @@ export default {
         `)
         .all();
 
-      return json(result.results);
+      return json(result.results, request);
     }
 
     if (
@@ -58,6 +69,7 @@ export default {
       if (!thread) {
         return json(
           { error: "Wątek nie istnieje" },
+          request,
           { status: 404 }
         );
       }
@@ -75,7 +87,7 @@ export default {
       return json({
         thread,
         posts: posts.results
-      });
+      }, request);
     }
 
     if (
@@ -91,6 +103,7 @@ export default {
         ) {
           return json(
             { error: "Tytuł jest wymagany" },
+            request,
             { status: 400 }
           );
         }
@@ -106,10 +119,11 @@ export default {
         return json({
           success: true,
           thread_id: result.meta.last_row_id
-        });
+        }, request);
       } catch (error) {
         return json(
           { error: "Nieprawidłowe dane" },
+          request,
           { status: 400 }
         );
       }
@@ -129,6 +143,7 @@ export default {
         ) {
           return json(
             { error: "Treść posta jest wymagana" },
+            request,
             { status: 400 }
           );
         }
@@ -145,6 +160,7 @@ export default {
         if (!thread) {
           return json(
             { error: "Wątek nie istnieje" },
+            request,
             { status: 404 }
           );
         }
@@ -163,10 +179,11 @@ export default {
         return json({
           success: true,
           post_id: result.meta.last_row_id
-        });
+        }, request);
       } catch (error) {
         return json(
           { error: "Nieprawidłowe dane" },
+          request,
           { status: 400 }
         );
       }
@@ -175,6 +192,6 @@ export default {
     return json({
       name: "Netivly API",
       status: "online"
-    });
+    }, request);
   }
 };
